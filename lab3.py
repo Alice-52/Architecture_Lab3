@@ -1,23 +1,43 @@
+import os
 from concurrent.futures import ThreadPoolExecutor
+from collections import Counter
 
-def func(x): # задача для параллелизации, вычисление квадратов чисел
+def func(x):  # задача для параллелизации, вычисление квадратов чисел
     return x * x
 
-def process_file(file_path):
-    with open(file_path, 'r') as f:
+def process_file(file_path):  # функция для анализа текста в файле
+    with open(file_path, 'r', encoding='utf-8') as f:  # Открываем файл с поддержкой кириллицы
         data = f.read()
+    # Разбиваем текст на слова, учитывая пробелы и переносы строк
+    words = data.split()
+    # Создаем частотный словарь слов
+    freq_dict = Counter(words)
+    return freq_dict
 
-    return data
+# Определяем корневую папку проекта
+project_root = os.getcwd()
 
-workers = 5 #кол-во потоков
-numbers = list(range(1,100)) #числа для вычисления квадратов
-files = ['file1.txt', 'file2.txt', 'file3.txt'] #файлы для частотного словаря
+# Составляем список всех текстовых файлов в корневой папке
+files = [os.path.join(project_root, f) for f in os.listdir(project_root) if f.endswith('.txt')]
 
+workers = 5  # количество потоков
+numbers = list(range(1, 100))  # числа для вычисления квадратов
 
+# Параллельная обработка чисел
 with ThreadPoolExecutor(workers) as pool:
     results = list(pool.map(func, numbers))
 
+print("Squares of numbers:")
 print(results)
+
+# Параллельная обработка файлов
+with ThreadPoolExecutor(workers) as pool:
+    file_results = list(pool.map(process_file, files))
+
+print("\nFrequency dictionaries for files (by words):")
+for file, freq_dict in zip(files, file_results):
+    print(f"File: {file}")
+    print(freq_dict)
 
 
 """
