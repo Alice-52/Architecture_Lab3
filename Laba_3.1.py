@@ -1,21 +1,39 @@
+"""Для работы с файлами и директориями"""
 import os
+
+"""Предоставляет высокоуровневый интерфейс для параллельного выполнения задач - Для пула для параллельной обработки"""
 from concurrent.futures import ThreadPoolExecutor
+
+"""Быстро подсчитываем количество объектов(слов в тексте)"""
 from collections import Counter
+
+"""Для обработки изображений(Python Imaging Library)"""
 from PIL import Image, ImageFilter
+
+"""Таймер для подсчёта времени работы функций"""
 from datetime import datetime
+
+"""С помощью Lock мы потокобезопасно получаем доступ к консоли"""
+"""Чтобы избежать взаимную блокировку при выводе в неё :) """
 from threading import Lock
 
-"""Для более стабильного и последовательного вывода"""
+"""Т.е. Для более стабильного и последовательного вывода"""
 print_lock = Lock()
+
 
 def func(x):
     """Задача для параллелизации: вычисление квадратов чисел."""
+
+    """Считаем начало и конец работы функции, так будет в каждой функции"""
     start_time = datetime.now()
+
     result = x * x
+
     end_time = datetime.now()
     elapsed = (end_time - start_time).total_seconds()
 
     """Для более стабильного и последовательного вывода (только один поток может выводить данные в консоль в определённый момент времени)"""
+    """Создаём строку, содержащую всю необходимую инфу, чтобы все сразу не выводились"""
     output = (
         f"➤ [START] Вычисление квадрата числа {x} началось в {start_time.strftime('%H:%M:%S.%f')}\n"
         f"✔ [END] Вычисление квадрата числа {x} завершилось в {end_time.strftime('%H:%M:%S.%f')}\n"
@@ -27,18 +45,27 @@ def func(x):
     return result
 
 
+
 def process_file(file_path):
     """Функция для анализа текста в файле."""
+
     start_time = datetime.now()
     try:
+        """Удобный и правилльный with(закрывает файл автоматически - нет утечки данных)"""
+        """В режиме чтения - r, раскодируем в UTF-8"""
         with open(file_path, 'r', encoding='utf-8') as f:
+            """Считаем частоту слов"""
             freq_dict = Counter()
+            """Читаем построчно"""
             for line in f:
                 words = line.split()
+                """Апдейтим добавляя слова из текущей строчки"""
                 freq_dict.update(words)
 
         end_time = datetime.now()
         elapsed = (end_time - start_time).total_seconds()
+        """Аналогично всё в одну строчку для правильного вывода"""
+        """Возвращаем словарь с частотой встречаемости слов в файле"""
         output = (
             f"➤ [START] Обработка файла '{file_path}' началась в {start_time.strftime('%H:%M:%S.%f')}\n"
             f"✔ [END] Обработка файла '{file_path}' завершилась в {end_time.strftime('%H:%M:%S.%f')}\n"
@@ -48,6 +75,7 @@ def process_file(file_path):
             print(output)
         return freq_dict
 
+    #Обработка ошибок, возвращаем None, пишем о ней
     except Exception as e:
         end_time = datetime.now()
         print(
@@ -62,16 +90,28 @@ def process_image(image_path):
     """Функция для обработки изображений: инверсия цветов и размытие."""
     start_time = datetime.now()
     try:
+        """Опять with с автоматическим закрытием - без утечки ресурсов"""
         with Image.open(image_path) as img:
+            """Проверяем целостность изображения, т.е. повреждено - исключение"""
             img.verify()
+            """Открываем повторно, потому что verify мог изменить состояние img """
             img = Image.open(image_path)
+
+            """Меняем режим на RGB, чтобы избежать проблем с обработкой дальнейшей"""
             if img.mode in ("RGBA", "LA") or (img.mode == "P" and "transparency" in img.info):
                 img = img.convert("RGB")
+
+            """Инверсия с помощью функции Image.eval(цвет пикселя меняется на 255-значение изначальное)"""
             inverted_img = Image.eval(img, lambda x: 255 - x)
+
+            """Размываем по радиусу 2"""
             blurred_img = inverted_img.filter(ImageFilter.GaussianBlur(2))
+
+            """Сохраняем обработанное изображение"""
             output_path = f"{os.path.splitext(image_path)[0]}_processed.jpg"
             blurred_img.save(output_path)
 
+            """Всё аналогично"""
             end_time = datetime.now()
             elapsed = (end_time - start_time).total_seconds()
             print(
@@ -82,6 +122,7 @@ def process_image(image_path):
             )
             return output_path
 
+    #Обрабатываем ошибки
     except Exception as e:
         end_time = datetime.now()
         print(
