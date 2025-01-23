@@ -130,10 +130,13 @@ def main():
         for file, freq_dict in zip(text_files, file_results):
             if freq_dict is not None:
                 print(f"\nФайл: {file}")
-                for word, count in freq_dict.items():
-                    print(f"{word}: {count}")
+                if sum(freq_dict.values()) == 0:
+                    print(f"Файл пуст\n")
+                else:
+                    for word, count in freq_dict.items():
+                        print(f"{word}: {count}")
             else:
-                print(f"\nФайл '{file}' не обработан из-за ошибок\n")
+                print(f"\nФайл '{file}' \nНе обработан из-за ошибок\n")
 
     # Параллельная обработка изображений
     if image_files:
